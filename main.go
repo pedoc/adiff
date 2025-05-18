@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
@@ -11,17 +12,21 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: adiff str1 str2 splitstr")
-		fmt.Println("Sample: tool \"a,b,c\" \"b,c,d\" \",\"")
+	useTable := flag.Bool("t", false, "Display result in table format")
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) < 2 {
+		fmt.Println("Usage: adiff [-t] str1 str2 [splitstr]")
+		fmt.Println("Sample: adiff -t \"a,b,c\" \"b,c,d\" \",\"")
 		os.Exit(1)
 	}
 
-	str1 := os.Args[1]
-	str2 := os.Args[2]
-	sep := ","
-	if len(os.Args) >= 4 {
-		sep = os.Args[3]
+	str1 := args[0]
+	str2 := args[1]
+	sep := " "
+	if len(args) >= 3 {
+		sep = args[2]
 	}
 
 	set1StringArray := strings.Split(str1, sep)
@@ -33,7 +38,31 @@ func main() {
 	diff2 := difference(set2, set1)
 	inter := intersection(set1, set2)
 
-	printTable(str1, str2, sep, set1StringArray, set2StringArray, diff1, diff2, inter)
+	if *useTable {
+		printTable(str1, str2, sep, set1StringArray, set2StringArray, diff1, diff2, inter)
+	} else {
+		printPlain(str1, str2, sep, set1StringArray, set2StringArray, diff1, diff2, inter)
+	}
+}
+
+func printPlain(str1 string, str2 string, sep string, set1 []string, set2 []string, diff1 []string, diff2 []string, inter []string) {
+	sort.Strings(set1)
+	sort.Strings(set2)
+	sort.Strings(diff1)
+	sort.Strings(diff2)
+	sort.Strings(inter)
+
+	fmt.Println("raw:")
+	fmt.Println("str1:", str1)
+	fmt.Println("str2:", str2)
+	fmt.Println("raw(ordered):")
+	fmt.Println("set1:", strings.Join(set1, sep))
+	fmt.Println("set2:", strings.Join(set2, sep))
+	fmt.Println("diff:")
+	fmt.Println("set1-set2:", strings.Join(diff1, sep))
+	fmt.Println("set2-set1:", strings.Join(diff2, sep))
+	fmt.Println("inter:")
+	fmt.Println(strings.Join(inter, sep))
 }
 
 func printTable(str1 string, str2 string, sep string, set1, set2, diff1, diff2, inter []string) {
